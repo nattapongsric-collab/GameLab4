@@ -28,22 +28,24 @@ var is_attacking = false
 var shoot_cooldown_timer = 0.0
 var can_damage = true
 
-@onready var player_sprite : AnimationPlayer = $student/AnimationPlayer
-@onready var player_node = $student
+@onready var player_sprite : AnimatedSprite2D = $AnimatedSprite2D
 @onready var bullet_marker = $BulletMarker
 @onready var particle_trails = $ParticleTrails
 @onready var death_particles = $DeathParticles
 
 
-
 # --------- BUILT-IN FUNCTIONS ---------- #
 func _ready() -> void:
+	if player_sprite == null:
+		push_error("Player: 'AnimatedSprite2D' node not found! Check the node name/path in the scene tree.")
+		return
+	
 	spawn_point = global_position
 	if GameManager.save_player_position.x != 0:
-		global_position =  GameManager.save_player_position
+		global_position = GameManager.save_player_position
 		GameManager.save_player_position = Vector2.ZERO
 	player_sprite.animation_finished.connect(_on_animation_finished)
-	
+
 func _physics_process(_delta):
 	is_grounded = is_on_floor()
 	movement()
@@ -54,7 +56,7 @@ func _process(_delta):
 	handle_shooting()
 	if shoot_cooldown_timer > 0:
 		shoot_cooldown_timer -= _delta
-	
+
 # --------- CUSTOM FUNCTIONS ---------- #
 
 # <-- Player Movement Code -->
@@ -95,26 +97,33 @@ func jump():
 
 # Handle Player Animations
 func player_animations():
+	if player_sprite == null:
+		return
 	particle_trails.emitting = false
 	if is_attacking:
 		return
 	
+	var anim_name := ""
 	if is_on_floor():
 		if abs(velocity.x) > 0:
 			particle_trails.emitting = true
-			player_sprite.current_animation = "Walk"
+			anim_name = "walk"
 		else:
-			player_sprite.current_animation = "Idle"
+			anim_name = "idle"
 	else:
-		player_sprite.current_animation = "Jump"
-
+		anim_name = "jump"
+	
+	if player_sprite.animation != anim_name:
+		player_sprite.play(anim_name)
 
 # Flip player sprite based on X velocity
 func flip_player():
-	if velocity.x < 0: 
-		player_node.scale.x = -1
+	if player_sprite == null:
+		return
+	if velocity.x < 0:
+		player_sprite.flip_h = true
 	elif velocity.x > 0:
-		player_node.scale.x = 1
+		player_sprite.flip_h = false
 
 # Tween Animations
 func death_tween():
@@ -143,14 +152,17 @@ func jump_tween():
 	tween.tween_property(self, "scale", Vector2(1.0,1.0), 0.1)
 
 func damage_tween():
+	if player_sprite == null:
+		return
 	var tween = create_tween() 
 	tween.stop(); tween.play()
 	can_damage = false
 	for i in range(1,10):
-		tween.tween_property(player_node , "modulate", Color.RED, 0.1)
-		tween.tween_property(player_node , "modulate", Color.WHITE, 0.1)
+		tween.tween_property(player_sprite, "modulate", Color.RED, 0.1)
+		tween.tween_property(player_sprite, "modulate", Color.WHITE, 0.1)
 	await tween.finished
 	can_damage = true
+
 # --------- SIGNALS ---------- #
 
 # Reset the player's position to the current level spawn point if collided with any trap
@@ -173,20 +185,19 @@ func handle_shooting():
 		shoot()
 
 func shoot():
-	if bullet_scene == null:
+	if bullet_scene == null or player_sprite == null:
 		return
 	is_attacking = true
-	player_sprite.play("Attack")
+	player_sprite.play("attack")
 	var bullet = bullet_scene.instantiate()
 	bullet.global_position = bullet_marker.global_position
 	var angle = deg_to_rad(randf_range(0, 20))
-	var sign_x = 1.0 if player_node.scale.x > 0 else -1.0
+	var sign_x = -1.0 if player_sprite.flip_h else 1.0
 	var dir = Vector2(cos(angle) * sign_x, -sin(angle))
 	get_parent().add_child(bullet)
 	bullet.shoot(dir, 600, bullet_lifetime)
 	shoot_cooldown_timer = shoot_cooldown_time
 
-func _on_animation_finished(anim_name: String) -> void:
-	if anim_name == "Attack":
+func _on_animation_finished() -> void:
+	if player_sprite.animation == "attack":
 		is_attacking = false
-	
