@@ -1,12 +1,16 @@
+# Game Lab 4: 2D Platformer Game
+นาย ณัฐพงษ์ ศรีเชียงสา  673380440-6
+
 # 2D Platformer Starter Kit
 
 This starter kit provides all the essential mechanics needed to build a complete 2D platformer game in Godot 4.7. It is designed as a hands-on learning resource for students taking the **Computer Game Development** course at the **College of Computing, Khon Kaen University**.
 
 ## Preview
 
-<img src="docs/qrcode.png" style="width:300px;" />
+<img src="docs/demo1.png" style="width:300px;" />
+<img src="docs/demo2.png" style="width:300px;" />
 
-- [Game Preview](https://computingkku.github.io/2D-Platformer-Starter-Kit/)
+- [Game Preview](https://drive.google.com/file/d/1Hh63pk3qD-cXpOUa4OXRjpYuPx_Wb297/view?usp=sharing)
 
 
 ## Features
